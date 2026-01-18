@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deep業界辞典</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary: #64748b;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            padding-bottom: 80px; /* Footer space */
+        }
+
+        /* Header */
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 16px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h1 { font-size: 1.25rem; font-weight: bold; }
+        .subtitle { font-size: 0.8rem; opacity: 0.9; }
+
+        /* Industry Selector (Horizontal Scroll) */
+        .nav-scroller {
+            background: white;
+            padding: 12px;
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            border-bottom: 1px solid var(--border);
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .nav-btn {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: white;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nav-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            font-weight: bold;
+        }
+
+        /* Main Content */
+        .container {
+            padding: 16px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Card Component */
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            margin-bottom: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .card-header {
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            background: #fff;
+        }
+
+        .card-title {
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .icon { font-size: 1.2rem; }
+
+        .chevron {
+            transition: transform 0.3s;
+        }
+        .card.open .chevron {
+            transform: rotate(180deg);
+        }
+
+        .card-content {
+            display: none;
+            padding: 0 16px 16px 16px;
+            border-top: 1px solid var(--border);
+            background: #fafafa;
+            animation: fadeIn 0.3s;
+        }
+
+        .card.open .card-content { display: block; }
+
+        /* Content Styling */
+        h3 {
+            font-size: 1rem;
+            margin: 16px 0 8px 0;
+            color: var(--primary);
+            border-left: 3px solid var(--primary);
+            padding-left: 8px;
+        }
+
+        p {
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+
+        ul {
+            padding-left: 20px;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        li { margin-bottom: 4px; }
+
+        /* Specific Component: Vendor Comparison */
+        .vendor-box {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 8px;
+        }
+        .vendor-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .badge-high { background: #fee2e2; color: #991b1b; } /* Red */
+        .badge-mid { background: #fef3c7; color: #92400e; } /* Yellow */
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .comp-col {
+            background: #f1f5f9;
+            padding: 8px;
+            border-radius: 6px;
+        }
+        .comp-title {
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: var(--text-light);
+            margin-bottom: 4px;
+            text-align: center;
+            border-bottom: 1px solid #cbd5e1;
+            padding-bottom: 4px;
+        }
+        .comp-list {
+            list-style: none;
+            padding: 0;
+            font-size: 0.8rem;
+            text-align: center;
+        }
+
+        /* Custom Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+        .modal-box {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            transform: translateY(20px);
+            transition: transform 0.3s;
+        }
+        .modal-overlay.active .modal-box {
+            transform: translateY(0);
+        }
+        .modal-title { font-size: 1.1rem; font-weight: bold; margin-bottom: 12px; }
+        .modal-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            width: 100%;
+            margin-top: 16px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tag {
+            display: inline-block;
+            background: #e2e8f0;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            margin-right: 4px;
+            color: var(--text-light);
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Deep業界辞典 <span style="font-size:0.8em">Beta</span></h1>
+    <div class="subtitle">営業・転職のための深掘りデータベース</div>
+</header>
+
+<div class="nav-scroller" id="nav-container">
+    </div>
+
+<div class="container" id="content-area">
+    </div>
+
+<div class="modal-overlay" id="customModal">
+    <div class="modal-box">
+        <div class="modal-title" id="modalTitle">Title</div>
+        <div id="modalBody">Body content</div>
+        <button class="modal-btn" onclick="closeModal()">閉じる</button>
+    </div>
+</div>
+
+<script>
+    // --- Data Source (Database) ---
+    const db = {
+        care: {
+            name: "介護業界",
+            icon: "🧓",
+            sections: [
+                {
+                    title: "1. 成り立ち・歴史",
+                    content: `
+                        <p><strong>起源:</strong> 家族介護または措置制度（行政決定）からスタート。</p>
+                        <p><strong>転換点:</strong> 2000年「介護保険法」。措置から契約へ移行し民間参入が爆発。</p>
+                        <p><strong>現在:</strong> 2040年問題（高齢者ピーク）に向けた総力戦状態。</p>
+                    `
+                },
+                {
+                    title: "2. 基礎データ・雇用",
+                    content: `
+                        <ul>
+                            <li><strong>市場規模:</strong> 15兆円→26兆円へ拡大予測。</li>
+                            <li><strong>平均年齢:</strong> 48.4歳（高齢化進行中）。</li>
+                            <li><strong>大手:</strong> SOMPOケア、ベネッセ、ニチイ学館。</li>
+                        </ul>
+                    `
+                },
+                {
+                    title: "3. 外国人雇用・依存度",
+                    content: `
+                        <div class="vendor-box">
+                            <span class="vendor-badge badge-high">依存度: 高 (拡大一途)</span>
+                            <p><strong>現状:</strong> 都市部ではスタッフの3割が外国人という施設も。</p>
+                            <p><strong>制度:</strong> 「技能実習」から「育成就労」へ。特定技能による即戦力化が進む。</p>
+                            <p><strong>リスク:</strong> 円安と制度変更による「日本離れ」が最大のリスク。</p>
+                        </div>
+                    `
+                },
+                {
+                    title: "4. ベンダー勢力図・依存度",
+                    content: `
+                        <div class="vendor-box">
+                            <span class="vendor-badge badge-mid">ベンダー依存度: 中〜高</span>
+                            <p>報酬改定対応のため、専門ソフトが必須。</p>
+                            <div class="comparison-grid">
+                                <div class="comp-col">
+                                    <div class="comp-title">🏢 都市部・大手</div>
+                                    <ul class="comp-list">
+                                        <li>ほのぼのNEXT (NDソフト)</li>
+                                        <li>ワイズマン</li>
+                                        <li>カイポケ (SMS)</li>
+                                    </ul>
+                                </div>
+                                <div class="comp-col">
+                                    <div class="comp-title">⛰ 地方・中小</div>
+                                    <ul class="comp-list">
+                                        <li>ワイズマン (圧倒的)</li>
+                                        <li>地場ベンダー</li>
+                                        <li>紙媒体 (未導入)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    `
+                },
+                {
+                    title: "5. 業界特有の注意点・リスク",
+                    content: `
+                        <p><strong>報酬制度:</strong> 売上は国が決める公定価格。自助努力での値上げ不可。</p>
+                        <p><strong>配置基準:</strong> 3:1の配置基準割れは即減算・営業停止。</p>
+                        <p><strong>サイバー事例:</strong> USBメモリ紛失による個人情報漏洩が多発。</p>
+                    `
+                },
+                {
+                    title: "6. 未来予測・DX",
+                    content: `
+                        <p><strong>攻め:</strong> 科学的介護（データに基づくケア）、混合介護（富裕層向け）。</p>
+                        <p><strong>DX優先度:</strong> 1.記録・請求のデジタル化、2.見守りセンサー（夜勤負担減）。</p>
+                    `
+                }
+            ]
+        },
+        medical: {
+            name: "医療業界",
+            icon: "🏥",
+            sections: [
+                {
+                    title: "1. 成り立ち・構造",
+                    content: `
+                        <p><strong>基盤:</strong> 国民皆保険制度。</p>
+                        <p><strong>構造:</strong> 200床以上の「病院」と19床以下の「診療所（クリニック）」に二極化。</p>
+                    `
+                },
+                {
+                    title: "2. 基礎データ",
+                    content: `
+                        <ul>
+                            <li><strong>市場規模:</strong> 約45兆円（国民医療費）。</li>
+                            <li><strong>特徴:</strong> 景気に左右されにくいが、診療報酬改定の影響は大。</li>
+                        </ul>
+                    `
+                },
+                {
+                    title: "3. ベンダー勢力図・依存度",
+                    content: `
+                        <div class="vendor-box">
+                            <span class="vendor-badge badge-high" style="background:#fee2e2; color:#b91c1c;">ベンダー依存度: 極めて高い (Sランク)</span>
+                            <p style="font-size:0.8rem; color:#666;">※電子カルテのデータ移行困難性によるロックインが激しい。</p>
+                            <div class="comparison-grid">
+                                <div class="comp-col">
+                                    <div class="comp-title">🏢 都市部・大規模</div>
+                                    <ul class="comp-list">
+                                        <li>富士通 (Fujitsu)</li>
+                                        <li>PHC</li>
+                                        <li>シーメンス</li>
+                                        <li>NEC</li>
+                                        <li>ソフトウェア・サービス</li>
+                                    </ul>
+                                </div>
+                                <div class="comp-col">
+                                    <div class="comp-title">⛰ 地方・クリニック</div>
+                                    <ul class="comp-list">
+                                        <li>PHC (メディコム)</li>
+                                        <li>Canon (画像系セット)</li>
+                                        <li>地場事務機屋・リコー等</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    `
+                },
+                {
+                    title: "4. 通信・DXの攻め所",
+                    content: `
+                        <p><strong>現状:</strong> レセコン普及は9割だが、電子カルテは一般診療所で約50%。残り半分は「紙」。</p>
+                        <p><strong>通信営業の狙い目:</strong> <span class="tag">オンライン資格確認義務化</span>に伴う回線見直し。<span class="tag">クラウドカルテ</span>への移行提案。</p>
+                        <p><strong>地方攻略:</strong> 飛び込みNG。地場の医療機器ディーラーや事務機屋との協業が鍵。</p>
+                    `
+                },
+                {
+                    title: "5. セキュリティ・リスク",
+                    content: `
+                        <p><strong>事例:</strong> 大阪急性期・総合医療センター（ランサムウェアで診療停止）。</p>
+                        <p><strong>盲点:</strong> 「閉域網だから安全」神話の崩壊。VPN機器の脆弱性や保守端末からの感染。</p>
+                    `
+                }
+            ]
+        },
+        construction: {
+            name: "建設業界",
+            icon: "🏗️",
+            sections: [
+                {
+                    title: "準備中",
+                    content: "<p>現在データを収集中です。<br>（次回アップデート：2024年問題、外国人依存度Sランク、スーパーゼネコンvs地場工務店のCADベンダー戦争など）</p>"
+                }
+            ]
+        }
+    };
+
+    // --- Logic ---
+    let currentIndustry = 'care';
+
+    function init() {
+        renderNav();
+        renderContent(currentIndustry);
+    }
+
+    function renderNav() {
+        const container = document.getElementById('nav-container');
+        container.innerHTML = '';
+        
+        Object.keys(db).forEach(key => {
+            const btn = document.createElement('button');
+            btn.className = `nav-btn ${key === currentIndustry ? 'active' : ''}`;
+            btn.innerHTML = `${db[key].icon} ${db[key].name}`;
+            btn.onclick = () => switchIndustry(key);
+            container.appendChild(btn);
+        });
+    }
+
+    function switchIndustry(key) {
+        currentIndustry = key;
+        renderNav();
+        renderContent(key);
+    }
+
+    function renderContent(key) {
+        const container = document.getElementById('content-area');
+        const data = db[key];
+        container.innerHTML = ''; // Clear
+
+        data.sections.forEach((section, index) => {
+            // Card Element
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            // Header
+            const header = document.createElement('div');
+            header.className = 'card-header';
+            header.onclick = () => toggleCard(card);
+            
+            header.innerHTML = `
+                <div class="card-title">
+                    ${section.title}
+                </div>
+                <div class="chevron">▼</div>
+            `;
+
+            // Content
+            const content = document.createElement('div');
+            content.className = 'card-content';
+            content.innerHTML = section.content;
+
+            card.appendChild(header);
+            card.appendChild(content);
+            container.appendChild(card);
+        });
+    }
+
+    function toggleCard(cardElement) {
+        const wasOpen = cardElement.classList.contains('open');
+        
+        // Close all others (Accordion behavior - optional)
+        // document.querySelectorAll('.card').forEach(c => c.classList.remove('open'));
+
+        if (!wasOpen) {
+            cardElement.classList.add('open');
+        } else {
+            cardElement.classList.remove('open');
+        }
+    }
+
+    // Custom Modal Logic
+    function openModal(title, message) {
+        document.getElementById('modalTitle').textContent = title;
+        document.getElementById('modalBody').innerHTML = message;
+        document.getElementById('customModal').classList.add('active');
+    }
+
+    function closeModal() {
+        document.getElementById('customModal').classList.remove('active');
+    }
+
+    // Initialize
+    init();
+
+</script>
+
+</body>
+</html>
